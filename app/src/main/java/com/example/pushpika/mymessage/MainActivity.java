@@ -20,6 +20,9 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +39,10 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    String HttpUrl = "http://10.22.20.118:3002/api/register";
+    String HttpUrl = "http://192.168.1.101:3002/api/authenticate";
+    public static String jwtToken = "";
+    public static String userID ="";
+    public static String loginState = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +83,27 @@ public class MainActivity extends AppCompatActivity {
 
                             // Hiding the progress dialog after all task complete.
                             progressBar.setVisibility(View.GONE);
+                            Log.d("MainActivity","server response is"+ServerResponse);
+                            JSONObject jsonObject = null, userObject = null;
+                            try {
+                                jsonObject = new JSONObject(ServerResponse);
+                                loginState =  jsonObject.get("success").toString();
+                                jwtToken = jsonObject.get("token").toString();
+                                userObject = (JSONObject) jsonObject.get("user");
+                                userID = userObject.get("_id").toString();
+                                Log.d("MainAct success is",loginState+" Token is-- >"+jwtToken);
+                                Log.d("MainAct userid",userObject.get("_id").toString());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
 
                             // Showing response message coming from server.
                             Toast.makeText(MainActivity.this, ServerResponse, Toast.LENGTH_LONG).show();
+                            if (loginState.equals("true")){
+                                Intent intent = new Intent(MainActivity.this, RoomsActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
                         }
                     },
                     new Response.ErrorListener() {
