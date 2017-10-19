@@ -2,12 +2,14 @@ package com.example.pushpika.mymessage;
 
 public class Contact {
     private String email;
-    private String name;
+    private String fname;
+    private String lname;
     private String id;
 
-    public Contact(String email, String name, String id) {
+    public Contact(String email, String fname, String lname, String id) {
         this.email = email;
-        this.name = name;
+        this.fname = fname;
+        this.lname = lname;
         this.id = id;
     }
 
@@ -19,12 +21,20 @@ public class Contact {
         this.email = email;
     }
 
-    public String getName() {
-        return name;
+    public String getFname() {
+        return fname;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setFname(String fname) {
+        this.fname = fname;
+    }
+
+    public String getLname() {
+        return lname;
+    }
+
+    public void setLname(String lname) {
+        this.lname = lname;
     }
 
     public String getID() {

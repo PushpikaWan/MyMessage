@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.util.PatternsCompat;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -34,7 +36,6 @@ import java.util.Map;
 
 public class NewChatDialog extends DialogFragment implements View.OnClickListener {
 
-    private TextView nameField;
     private TextView emailField;
     private View submitButton;
     private View cancelButton;
@@ -48,7 +49,7 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    String HttpUrl = "http://192.168.1.101:3002/api/checkuser";
+    String HttpUrl = MainActivity.baseUrl+"user/";
 
     public static NewChatDialog newInstance(Listener listener) {
         NewChatDialog dialog = new NewChatDialog();
@@ -61,7 +62,6 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_new_chat, container, false);
-        nameField = (TextView) view.findViewById(R.id.name);
         emailField = (TextView) view.findViewById(R.id.email);
         submitButton = view.findViewById(R.id.tv_submit);
         cancelButton = view.findViewById(R.id.tv_cancel);
@@ -100,16 +100,12 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.tv_submit:
-                String name = nameField.getText().toString();
                 String email = emailField.getText().toString();
-                if (name.isEmpty()) {
-                    nameField.setError("Please insert name!");
-                    nameField.requestFocus();
-                } else if (!PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()) {
+                if (!PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()) {
                     emailField.setError("Please insert a valid email!");
                     emailField.requestFocus();
                 } else {
-                    checkUser(name,email);
+                    checkUser(email);
                     dismiss();
                 }
                 break;
@@ -120,26 +116,30 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     }
 
 
-    public void checkUser(final String name, final String email){
+    public void checkUser(final String email){
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, HttpUrl,
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, HttpUrl+email,
                 new Response.Listener<String>() {
+
                     @Override
                     public void onResponse(String ServerResponse) {
-                        String state,userID,message;
+                        String state,userID,message, fname, lname;
                         // Hiding the progress dialog after all task complete.
                         progressBar.setVisibility(View.GONE);
                         Log.d("MainActivity","server response is"+ServerResponse);
-                        JSONObject jsonObject = null;
+                        JSONObject jsonObject = null, userObject = null;
                         try {
                             jsonObject = new JSONObject(ServerResponse);
                             state =  jsonObject.get("success").toString();
-                            userID =  jsonObject.get("userID").toString();
                             message = jsonObject.get("message").toString();
+                            userObject = (JSONObject) jsonObject.get("user");
+                            userID = userObject.get("_id").toString();
+                            fname = userObject.get("fname").toString();
+                            lname = userObject.get("lname").toString();
 
                             if(state.equals("true")){
                                 if (listener != null) {
-                                    listener.onSubmit(name, email,userID,message);
+                                    listener.onSubmit(fname, lname, email,userID,message);
                                 }
                             }
                            // Log.d("MainAct userid",userObject.get("_id").toString());
@@ -161,7 +161,14 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
                         //Toast.makeText(getContext(), volleyError.toString(), Toast.LENGTH_LONG).show();
                     }
                 }) {
-
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                String auth = MainActivity.jwtToken;
+                headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                headers.put("Authorization", auth);
+                return headers;
+            }
             @Override
             public String getBodyContentType() {
                 return "application/x-www-form-urlencoded; charset=UTF-8";
@@ -174,7 +181,6 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
                 Map<String, String> params = new HashMap<String, String>();
 
                 // Adding All values to Params.
-                //params.put("name", name);
                 params.put("email", email);
                 return params;
             }
@@ -190,6 +196,6 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     }
 
     public interface Listener {
-        void onSubmit(String name, String email,String id, String message);
+        void onSubmit(String fname, String lname, String email,String id, String message);
     }
 }

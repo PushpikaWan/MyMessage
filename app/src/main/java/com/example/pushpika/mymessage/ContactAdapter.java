@@ -62,7 +62,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         }
 
         public void bind(Contact contact) {
-            nameText.setText(contact.getName());
+            nameText.setText(contact.getFname()+ " " +contact.getLname());
         }
 
         @Override

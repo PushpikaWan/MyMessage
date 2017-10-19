@@ -76,6 +76,7 @@ public class RoomsActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             //Qiscus.clearUser();
+                            sharedPreferences.edit().putString("isLogged","no").apply();
                             sharedPreferences.edit().clear().apply();
                             startActivity(new Intent(RoomsActivity.this, MainActivity.class));
                             finish();
@@ -95,9 +96,9 @@ public class RoomsActivity extends AppCompatActivity {
     public void createNewChat(View view) {
         NewChatDialog.newInstance(new NewChatDialog.Listener() {
             @Override
-            public void onSubmit(String name, String email,String id, String message) {
+            public void onSubmit(String fname, String lname, String email,String id, String message) {
                 Toast.makeText(RoomsActivity.this, message, Toast.LENGTH_LONG).show();
-                openChatWith(new Contact(email, name,id));
+                openChatWith(new Contact(email,fname,lname,id));
             }
         }).show(getSupportFragmentManager(), TAG);
     }

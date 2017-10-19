@@ -1,7 +1,9 @@
 package com.example.pushpika.mymessage;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.util.PatternsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,51 +31,61 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-
-    private EditText nameField;
     private EditText emailField;
     private EditText userKeyField;
-    private ProgressBar progressBar;
 
     // Creating Volley RequestQueue.
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    String HttpUrl = "http://192.168.1.101:3002/api/authenticate";
+    public static String baseUrl = "http://10.42.0.210:3002/api/";
+    String HttpUrl = baseUrl+"authenticate";
     public static String jwtToken = "";
     public static String userID ="";
     public static String loginState = "";
+
+    private ProgressDialog progressDialog;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        nameField = (EditText) findViewById(R.id.name);
-        emailField = (EditText) findViewById(R.id.email);
-        userKeyField = (EditText) findViewById(R.id.key);
-        progressBar = (ProgressBar) findViewById(R.id.progress);
+        emailField = (EditText) findViewById(R.id.input_email);
+        userKeyField = (EditText) findViewById(R.id.input_password);
+        progressDialog= new ProgressDialog(MainActivity.this);
 
         // Creating Volley newRequestQueue .
         requestQueue = Volley.newRequestQueue(MainActivity.this);
+        sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
+        String state = sharedPreferences.getString("isLogged", "no");
+        if(state.equals("yes")){
+            Intent intent = new Intent(this, RoomsActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    public void register(View view){
+        Intent intent = new Intent(this,RegisterActivity.class);
+        startActivity(intent);
+        finish();
 
     }
 
     public void setupUser(View view) {
-        final String name = nameField.getText().toString();
         final String email = emailField.getText().toString();
         final String key = userKeyField.getText().toString();
-        if (name.isEmpty()) {
-            nameField.setError("Please insert your name!");
-            nameField.requestFocus();
-        } else if (!PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()) {
             emailField.setError("Please insert a valid email!");
             emailField.requestFocus();
         } else if (key.isEmpty()) {
             userKeyField.setError("Please insert your user key!");
             userKeyField.requestFocus();
         } else {
-            progressBar.setVisibility(View.VISIBLE);
+            progressDialog.setMessage("Loading...");
+            progressDialog.show();
             //set volley call
             // Creating string request with post method.
             StringRequest stringRequest = new StringRequest(Request.Method.POST, HttpUrl,
@@ -82,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(String ServerResponse) {
 
                             // Hiding the progress dialog after all task complete.
-                            progressBar.setVisibility(View.GONE);
+                            progressDialog.dismiss();
                             Log.d("MainActivity","server response is"+ServerResponse);
                             JSONObject jsonObject = null, userObject = null;
                             try {
@@ -100,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
                             // Showing response message coming from server.
                             Toast.makeText(MainActivity.this, ServerResponse, Toast.LENGTH_LONG).show();
                             if (loginState.equals("true")){
+                                sharedPreferences.edit().putString("isLogged","yes").apply();
                                 Intent intent = new Intent(MainActivity.this, RoomsActivity.class);
                                 startActivity(intent);
                                 finish();
@@ -111,8 +124,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onErrorResponse(VolleyError volleyError) {
 
                             // Hiding the progress dialog after all task complete.
-                            progressBar.setVisibility(View.GONE);
-
+                            progressDialog.dismiss();
                             // Showing error message if something goes wrong.
                             Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
                         }
