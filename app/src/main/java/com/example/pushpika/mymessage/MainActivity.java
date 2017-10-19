@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         requestQueue = Volley.newRequestQueue(MainActivity.this);
         sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
         String state = sharedPreferences.getString("isLogged", "no");
+        jwtToken = sharedPreferences.getString("token", "");
         if(state.equals("yes")){
             Intent intent = new Intent(this, RoomsActivity.class);
             startActivity(intent);
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
                                 jwtToken = jsonObject.get("token").toString();
                                 userObject = (JSONObject) jsonObject.get("user");
                                 userID = userObject.get("_id").toString();
+                                sharedPreferences.edit().putString("token",jwtToken).apply();
                                 Log.d("MainAct success is",loginState+" Token is-- >"+jwtToken);
                                 Log.d("MainAct userid",userObject.get("_id").toString());
                             } catch (JSONException e) {

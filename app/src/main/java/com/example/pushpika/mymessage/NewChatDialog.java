@@ -132,16 +132,24 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
                             jsonObject = new JSONObject(ServerResponse);
                             state =  jsonObject.get("success").toString();
                             message = jsonObject.get("message").toString();
-                            userObject = (JSONObject) jsonObject.get("user");
-                            userID = userObject.get("_id").toString();
-                            fname = userObject.get("fname").toString();
-                            lname = userObject.get("lname").toString();
 
                             if(state.equals("true")){
+                                userObject = (JSONObject) jsonObject.get("user");
+                                userID = userObject.get("_id").toString();
+                                fname = userObject.get("fname").toString();
+                                lname = userObject.get("lname").toString();
+
                                 if (listener != null) {
-                                    listener.onSubmit(fname, lname, email,userID,message);
+                                    listener.onSubmit(fname, lname, email,userID,message,true);
                                 }
                             }
+
+                            else{
+                                if (listener != null) {
+                                    listener.onSubmit("", "", email,"",message,false);
+                                }
+                            }
+
                            // Log.d("MainAct userid",userObject.get("_id").toString());
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -196,6 +204,6 @@ public class NewChatDialog extends DialogFragment implements View.OnClickListene
     }
 
     public interface Listener {
-        void onSubmit(String fname, String lname, String email,String id, String message);
+        void onSubmit(String fname, String lname, String email,String id, String message, boolean state);
     }
 }

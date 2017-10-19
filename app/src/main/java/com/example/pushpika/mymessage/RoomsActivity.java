@@ -96,9 +96,11 @@ public class RoomsActivity extends AppCompatActivity {
     public void createNewChat(View view) {
         NewChatDialog.newInstance(new NewChatDialog.Listener() {
             @Override
-            public void onSubmit(String fname, String lname, String email,String id, String message) {
+            public void onSubmit(String fname, String lname, String email,String id, String message, boolean state) {
                 Toast.makeText(RoomsActivity.this, message, Toast.LENGTH_LONG).show();
-                openChatWith(new Contact(email,fname,lname,id));
+                if (state){
+                    openChatWith(new Contact(email,fname,lname,id));
+                }
             }
         }).show(getSupportFragmentManager(), TAG);
     }
@@ -176,6 +178,10 @@ public class RoomsActivity extends AppCompatActivity {
         progressDialog.show();
     }
 
+    public void openchatdemo(View view){
+        Intent intent = new Intent(this,chatActivity.class);
+        startActivity(intent);
+    }
     public void dismissLoading() {
         progressDialog.dismiss();
     }

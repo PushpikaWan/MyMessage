@@ -22,6 +22,6 @@
         app:layout_anchorGravity="bottom|right"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:onClick="createNewChat"/>
+        android:onClick="openchatdemo"/>
 
 </LinearLayout>
