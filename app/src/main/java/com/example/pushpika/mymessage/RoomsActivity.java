@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,22 +37,31 @@ public class RoomsActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
 
     private Gson gson;
+    private List<Contact> contactList;
+    public static Contact currentUser;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rooms);
-
+        contactList = new ArrayList<>();
         gson = new Gson();
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
 
         adapter = new ContactAdapter(this, getContacts());
+        final Intent intentchat = new Intent(this,chatActivity.class);
         adapter.setOnClickListener(new ContactAdapter.OnClickListener() {
             @Override
             public void onClick(int position) {
                 openChatWith(adapter.getContacts().get(position));
+                if (contactList.size()> position){
+                    currentUser = contactList.get(position);
+                    startActivity(intentchat);
+                }
+                //Toast.makeText(RoomsActivity.this, "contact clicked", Toast.LENGTH_SHORT).show();
+
             }
         });
         recyclerView.setHasFixedSize(true);
@@ -142,6 +152,10 @@ public class RoomsActivity extends AppCompatActivity {
 
     private List<Contact> getContacts() {
         String json = sharedPreferences.getString("contacts", "");
+        Type type = new TypeToken<List<Contact>>(){}.getType();
+        contactList = new ArrayList<>();
+        contactList.clear();
+        contactList= gson.fromJson(json, type);
         return gson.fromJson(json, new TypeToken<List<Contact>>() {}.getType());
     }
 
@@ -178,10 +192,6 @@ public class RoomsActivity extends AppCompatActivity {
         progressDialog.show();
     }
 
-    public void openchatdemo(View view){
-        Intent intent = new Intent(this,chatActivity.class);
-        startActivity(intent);
-    }
     public void dismissLoading() {
         progressDialog.dismiss();
     }

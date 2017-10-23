@@ -1,13 +1,11 @@
 package com.example.pushpika.mymessage;
 
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.util.PatternsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,6 +24,7 @@ import com.github.bassaer.chatmessageview.models.User;
 import com.github.bassaer.chatmessageview.utils.ChatBot;
 import com.github.bassaer.chatmessageview.views.ChatView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,6 +39,7 @@ public class chatActivity extends AppCompatActivity {
     // Creating Volley RequestQueue.
     RequestQueue requestQueue;
     String HttpUrl = MainActivity.baseUrl+"chat";
+    String HttpUrlget = MainActivity.baseUrl+"chat/";
     private ProgressDialog progressDialog;
 
     @Override
@@ -49,16 +49,17 @@ public class chatActivity extends AppCompatActivity {
         // Creating Volley newRequestQueue .
         requestQueue = Volley.newRequestQueue(chatActivity.this);
         progressDialog= new ProgressDialog(chatActivity.this);
+
         //User id
         int myId = 0;
         //User icon
         Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
         //User name
-        String myName = "Michael";
+        String myName = MainActivity.fName;
 
         int yourId = 1;
         Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
-        String yourName = "Emily";
+        String yourName = RoomsActivity.currentUser.getFname();
 
         final User me = new User(myId, myName, myIcon);
         final User you = new User(yourId, yourName, yourIcon);
@@ -93,15 +94,17 @@ public class chatActivity extends AppCompatActivity {
                         .build();
                 //Set to chat view
                 mChatView.send(message);
-                sendMessageToServer(mChatView.getInputText());
+                String curMessage = mChatView.getInputText();
+                sendMessageToServer(curMessage);
                 //Reset edit text
                 mChatView.setInputText("");
+
 
                 //Receive message
                 final Message receivedMessage = new Message.Builder()
                         .setUser(you)
                         .setRightMessage(false)
-                        .setMessageText(ChatBot.talk(me.getName(), message.getMessageText()))
+                        .setMessageText("he he heeeee")
                         .build();
 
                 // This is a demo bot
@@ -116,9 +119,51 @@ public class chatActivity extends AppCompatActivity {
             }
 
         });
+        getPrvMessagesFromServer();
+    }
+
+    public void setSendMessages(String sendMessage){
+        //User id
+        int myId = 0;
+        //User icon
+        Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
+        //User name
+        String myName = MainActivity.fName;
+
+        int yourId = 1;
+        Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
+        String yourName = RoomsActivity.currentUser.getFname();
+
+        final User me1 = new User(myId, myName, myIcon);
+        final User you1 = new User(yourId, yourName, yourIcon);
+
+        Message message = new Message.Builder()
+                .setUser(me1)
+                .setRightMessage(true)
+                .setMessageText(sendMessage)
+                .hideIcon(true)
+                .build();
+        //Set to chat view
+        mChatView.send(message);
 
     }
 
+    public void setReceivedMessages(String recMessage){
+
+        int yourId = 1;
+        Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
+        String yourName = RoomsActivity.currentUser.getFname();
+
+        final User you1 = new User(yourId, yourName, yourIcon);
+
+        //Receive message
+        final Message receivedMessage = new Message.Builder()
+                .setUser(you1)
+                .setRightMessage(false)
+                .setMessageText(recMessage)
+                .build();
+        mChatView.receive(receivedMessage);
+    }
 
     public void sendMessageToServer(final String message) {
 
@@ -176,8 +221,9 @@ public class chatActivity extends AppCompatActivity {
 
                     // Adding All values to Params.
                     //params.put("name", name);
-                    params.put("to", "59e85e5665d11c22c9c6fb23");
-                    params.put("message_body", "sdfgfs");
+                    Log.d("Chat act m","map string msg"+message);
+                    params.put("to", RoomsActivity.currentUser.getID());
+                    params.put("message_body", message);
 
 
                     return params;
@@ -192,7 +238,93 @@ public class chatActivity extends AppCompatActivity {
             requestQueue.add(stringRequest);
 
         }
+
+    public void getPrvMessagesFromServer(){
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, HttpUrlget+RoomsActivity.currentUser.getID(),
+                new Response.Listener<String>() {
+
+                    @Override
+                    public void onResponse(String ServerResponse) {
+                        String state,userID,message, fname, lname;
+                        // Hiding the progress dialog after all task complete.
+                        progressDialog.setMessage("Loading...");
+                        progressDialog.show();
+                        Log.d("MainActivity","server response is"+ServerResponse);
+                        JSONObject jsonObject = null, userObject = null;
+                        try {
+                            jsonObject = new JSONObject(ServerResponse);
+                            JSONArray result = jsonObject.getJSONArray("messages");
+                            String from, to, messageBody;
+                            for(int i = 0; i < result.length(); i++) {
+                                from = result.getJSONObject(i).getString("from");
+                                to = result.getJSONObject(i).getString("to");
+                                messageBody = result.getJSONObject(i).getString("message_body");
+                                if (from.equals(MainActivity.userID)){
+                                    setSendMessages(messageBody);
+                                    Log.d("ChatActivity","send messages"+messageBody);
+                                }
+                                else{
+                                    setReceivedMessages(messageBody);
+                                    Log.d("ChatActivity","received messages"+messageBody);
+                                }
+                            }
+                            progressDialog.dismiss();
+                            // Log.d("MainAct userid",userObject.get("_id").toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Showing response message coming from server.
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        // Hiding the progress dialog after all task complete.
+                        progressDialog.dismiss();
+                        Log.d("Newchat error",volleyError.toString());
+                        // Showing error message if something goes wrong.
+                        //Toast.makeText(getContext(), volleyError.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                String auth = MainActivity.jwtToken;
+                headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                headers.put("Authorization", auth);
+                return headers;
+            }
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+
+                // Creating Map String Params.
+                Map<String, String> params = new HashMap<String, String>();
+
+                // Adding All values to Params.
+                params.put("user_id", RoomsActivity.currentUser.getID());
+                return params;
+            }
+
+        };
+
+        // Creating RequestQueue.
+        // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+
+        // Adding the StringRequest object into requestQueue.
+        requestQueue.add(stringRequest);
+
     }
+
+}
+
 
 
 

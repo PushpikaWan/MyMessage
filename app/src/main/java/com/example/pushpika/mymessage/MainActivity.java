@@ -38,11 +38,12 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    public static String baseUrl = "http://10.42.0.210:3002/api/";
+    public static String baseUrl = "http://192.168.137.113:3002/api/";
     String HttpUrl = baseUrl+"authenticate";
     public static String jwtToken = "";
     public static String userID ="";
     public static String loginState = "";
+    public static String fName="";
 
     private ProgressDialog progressDialog;
     private SharedPreferences sharedPreferences;
@@ -55,16 +56,15 @@ public class MainActivity extends AppCompatActivity {
         emailField = (EditText) findViewById(R.id.input_email);
         userKeyField = (EditText) findViewById(R.id.input_password);
         progressDialog= new ProgressDialog(MainActivity.this);
-
+        String storedUserName, storedPassword;
         // Creating Volley newRequestQueue .
         requestQueue = Volley.newRequestQueue(MainActivity.this);
         sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
         String state = sharedPreferences.getString("isLogged", "no");
-        jwtToken = sharedPreferences.getString("token", "");
+        storedUserName = sharedPreferences.getString("userName", "");
+        storedPassword = sharedPreferences.getString("password", "");
         if(state.equals("yes")){
-            Intent intent = new Intent(this, RoomsActivity.class);
-            startActivity(intent);
-            finish();
+            authUser(storedUserName,storedPassword);
         }
     }
 
@@ -76,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setupUser(View view) {
-        final String email = emailField.getText().toString();
-        final String key = userKeyField.getText().toString();
+        String email = emailField.getText().toString();
+        String key = userKeyField.getText().toString();
         if (!PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()) {
             emailField.setError("Please insert a valid email!");
             emailField.requestFocus();
@@ -85,81 +85,86 @@ public class MainActivity extends AppCompatActivity {
             userKeyField.setError("Please insert your user key!");
             userKeyField.requestFocus();
         } else {
-            progressDialog.setMessage("Loading...");
-            progressDialog.show();
-            //set volley call
-            // Creating string request with post method.
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, HttpUrl,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String ServerResponse) {
-
-                            // Hiding the progress dialog after all task complete.
-                            progressDialog.dismiss();
-                            Log.d("MainActivity","server response is"+ServerResponse);
-                            JSONObject jsonObject = null, userObject = null;
-                            try {
-                                jsonObject = new JSONObject(ServerResponse);
-                                loginState =  jsonObject.get("success").toString();
-                                jwtToken = jsonObject.get("token").toString();
-                                userObject = (JSONObject) jsonObject.get("user");
-                                userID = userObject.get("_id").toString();
-                                sharedPreferences.edit().putString("token",jwtToken).apply();
-                                Log.d("MainAct success is",loginState+" Token is-- >"+jwtToken);
-                                Log.d("MainAct userid",userObject.get("_id").toString());
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            // Showing response message coming from server.
-                            Toast.makeText(MainActivity.this, ServerResponse, Toast.LENGTH_LONG).show();
-                            if (loginState.equals("true")){
-                                sharedPreferences.edit().putString("isLogged","yes").apply();
-                                Intent intent = new Intent(MainActivity.this, RoomsActivity.class);
-                                startActivity(intent);
-                                finish();
-                            }
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError volleyError) {
-
-                            // Hiding the progress dialog after all task complete.
-                            progressDialog.dismiss();
-                            // Showing error message if something goes wrong.
-                            Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
-                        }
-                    }) {
-
-                @Override
-                public String getBodyContentType() {
-                    return "application/x-www-form-urlencoded; charset=UTF-8";
-                }
-
-                @Override
-                protected Map<String, String> getParams() {
-
-                    // Creating Map String Params.
-                    Map<String, String> params = new HashMap<String, String>();
-
-                    // Adding All values to Params.
-                    //params.put("name", name);
-                    params.put("email", email);
-                    params.put("password", key);
-
-                    return params;
-                }
-
-            };
-
-            // Creating RequestQueue.
-           // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
-
-            // Adding the StringRequest object into requestQueue.
-            requestQueue.add(stringRequest);
-
+            authUser(email,key);
         }
+    }
+
+    private void authUser(final String email, final String password){
+        progressDialog.setMessage("Loading...");
+        progressDialog.show();
+        //set volley call
+        // Creating string request with post method.
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, HttpUrl,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String ServerResponse) {
+
+                        // Hiding the progress dialog after all task complete.
+                        progressDialog.dismiss();
+                        Log.d("MainActivity","server response is"+ServerResponse);
+                        JSONObject jsonObject = null, userObject = null;
+                        try {
+                            jsonObject = new JSONObject(ServerResponse);
+                            loginState =  jsonObject.get("success").toString();
+                            jwtToken = jsonObject.get("token").toString();
+                            userObject = (JSONObject) jsonObject.get("user");
+                            userID = userObject.get("_id").toString();
+                            fName = userObject.get("fname").toString();
+                            sharedPreferences.edit().putString("userName",email).apply();
+                            sharedPreferences.edit().putString("password",password).apply();
+                            Log.d("MainAct userid",userObject.get("_id").toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Showing response message coming from server.
+                        Toast.makeText(MainActivity.this, "Successful", Toast.LENGTH_LONG).show();
+                        if (loginState.equals("true")){
+                            sharedPreferences.edit().putString("isLogged","yes").apply();
+                            Intent intent = new Intent(MainActivity.this, RoomsActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        // Hiding the progress dialog after all task complete.
+                        progressDialog.dismiss();
+                        // Showing error message if something goes wrong.
+                        Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }) {
+
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+
+                // Creating Map String Params.
+                Map<String, String> params = new HashMap<String, String>();
+
+                // Adding All values to Params.
+                //params.put("name", name);
+                params.put("email", email);
+                params.put("password", password);
+
+                return params;
+            }
+
+        };
+
+        // Creating RequestQueue.
+        // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+
+        // Adding the StringRequest object into requestQueue.
+        requestQueue.add(stringRequest);
+
     }
 
 
