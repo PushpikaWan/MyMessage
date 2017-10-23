@@ -28,9 +28,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import javax.xml.datatype.XMLGregorianCalendar;
 
 public class chatActivity extends AppCompatActivity {
 
@@ -98,31 +103,13 @@ public class chatActivity extends AppCompatActivity {
                 sendMessageToServer(curMessage);
                 //Reset edit text
                 mChatView.setInputText("");
-
-
-                //Receive message
-                final Message receivedMessage = new Message.Builder()
-                        .setUser(you)
-                        .setRightMessage(false)
-                        .setMessageText("he he heeeee")
-                        .build();
-
-                // This is a demo bot
-                // Return within 3 seconds
-                int sendDelay = (new Random().nextInt(4) + 1) * 1000;
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mChatView.receive(receivedMessage);
-                    }
-                }, sendDelay);
             }
 
         });
         getPrvMessagesFromServer();
     }
 
-    public void setSendMessages(String sendMessage){
+    public void setSendMessages(String sendMessage, String createdat){
         //User id
         int myId = 0;
         //User icon
@@ -136,19 +123,26 @@ public class chatActivity extends AppCompatActivity {
 
         final User me1 = new User(myId, myName, myIcon);
         final User you1 = new User(yourId, yourName, yourIcon);
-
+        Calendar calendar = null;
+        ISO8601 iso8601 = new ISO8601();
+        try {
+             calendar = ISO8601.toCalendar(createdat);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         Message message = new Message.Builder()
                 .setUser(me1)
                 .setRightMessage(true)
                 .setMessageText(sendMessage)
                 .hideIcon(true)
+                .setCreatedAt(calendar)
                 .build();
         //Set to chat view
         mChatView.send(message);
 
     }
 
-    public void setReceivedMessages(String recMessage){
+    public void setReceivedMessages(String recMessage, String createdat){
 
         int yourId = 1;
         Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
@@ -156,11 +150,21 @@ public class chatActivity extends AppCompatActivity {
 
         final User you1 = new User(yourId, yourName, yourIcon);
 
+        Calendar calendar = null;
+        ISO8601 iso8601 = new ISO8601();
+        try {
+            calendar = ISO8601.toCalendar(createdat);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         //Receive message
         final Message receivedMessage = new Message.Builder()
                 .setUser(you1)
                 .setRightMessage(false)
                 .setMessageText(recMessage)
+                .hideIcon(true)
+                .setCreatedAt(calendar)
                 .build();
         mChatView.receive(receivedMessage);
     }
@@ -255,17 +259,18 @@ public class chatActivity extends AppCompatActivity {
                         try {
                             jsonObject = new JSONObject(ServerResponse);
                             JSONArray result = jsonObject.getJSONArray("messages");
-                            String from, to, messageBody;
+                            String from, to, messageBody, createdAt;
                             for(int i = 0; i < result.length(); i++) {
                                 from = result.getJSONObject(i).getString("from");
                                 to = result.getJSONObject(i).getString("to");
                                 messageBody = result.getJSONObject(i).getString("message_body");
+                                createdAt = result.getJSONObject(i).getString("createdAt");
                                 if (from.equals(MainActivity.userID)){
-                                    setSendMessages(messageBody);
+                                    setSendMessages(messageBody,createdAt);
                                     Log.d("ChatActivity","send messages"+messageBody);
                                 }
                                 else{
-                                    setReceivedMessages(messageBody);
+                                    setReceivedMessages(messageBody,createdAt);
                                     Log.d("ChatActivity","received messages"+messageBody);
                                 }
                             }
