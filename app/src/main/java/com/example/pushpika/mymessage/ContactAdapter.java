@@ -53,20 +53,21 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     public class ContactVH extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private TextView nameText;
-        private TextView curMessage;
+        private TextView newMsg;
         private OnClickListener clickListener;
 
         public ContactVH(View itemView, OnClickListener clickListener) {
             super(itemView);
             nameText = (TextView) itemView.findViewById(R.id.name);
+            newMsg = (TextView) itemView.findViewById(R.id.newmsg);
             this.clickListener = clickListener;
-
             itemView.setOnClickListener(this);
         }
 
         public void bind(Contact contact) {
             if (RoomsActivity.newMessageNodes.isEmpty()){
                 nameText.setText(contact.getFname()+ " " +contact.getLname());
+                newMsg.setText("");
             }
             else{
                 boolean isInList =false;
@@ -77,10 +78,12 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                     }
                 }
                 if(isInList){
-                    nameText.setText(" New  "+contact.getFname()+ " " +contact.getLname());
+                    nameText.setText(contact.getFname()+ " " +contact.getLname());
+                    newMsg.setText("New Message");
                 }
                 else{
                     nameText.setText(contact.getFname()+ " " +contact.getLname());
+                    newMsg.setText("");
                 }
             }
         }
