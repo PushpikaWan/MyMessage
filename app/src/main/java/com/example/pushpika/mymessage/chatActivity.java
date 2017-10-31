@@ -81,6 +81,7 @@ public class chatActivity extends AppCompatActivity {
         mChatView.setBackgroundColor(ContextCompat.getColor(this, R.color.blueGray500));
         mChatView.setSendButtonColor(ContextCompat.getColor(this, R.color.cyan900));
         mChatView.setSendIcon(R.drawable.ic_action_send);
+        mChatView.setMessageStatusTextColor(Color.WHITE);
         mChatView.setRightMessageTextColor(Color.WHITE);
         mChatView.setLeftMessageTextColor(Color.BLACK);
         mChatView.setUsernameTextColor(Color.WHITE);
@@ -99,6 +100,10 @@ public class chatActivity extends AppCompatActivity {
                         .setUser(me)
                         .setRightMessage(true)
                         .setMessageText(mChatView.getInputText())
+                        .setStatusIconFormatter(new MyMessageStatusFormatter(chatActivity.this))
+                        //  .setStatusTextFormatter(new MyMessageStatusFormatter(this))
+                        .setMessageStatusType(Message.MESSAGE_STATUS_ICON)
+                        .setStatus(MyMessageStatusFormatter.STATUS_DELIVERING)
                         .hideIcon(true)
                         .build();
                 //Set to chat view
@@ -113,7 +118,7 @@ public class chatActivity extends AppCompatActivity {
         getPrvMessagesFromServer();
     }
 
-    public void setSendMessages(String sendMessage, String createdat){
+    public void setSendMessages(String sendMessage, String createdat, String status){
         //User id
         int myId = 0;
         //User icon
@@ -140,8 +145,15 @@ public class chatActivity extends AppCompatActivity {
                 .setMessageText(sendMessage)
                 .hideIcon(true)
                 .setCreatedAt(calendar)
+                .setStatusIconFormatter(new MyMessageStatusFormatter(this))
+              //  .setStatusTextFormatter(new MyMessageStatusFormatter(this))
+                .setMessageStatusType(Message.MESSAGE_STATUS_ICON)
+                .setStatus(MyMessageStatusFormatter.STATUS_DELIVERED)
                 .build();
         //Set to chat view
+        if (status.equals("sent")){
+            message.setStatus(MyMessageStatusFormatter.STATUS_DELIVERING);
+        }
         mChatView.send(message);
 
     }
@@ -272,14 +284,15 @@ public class chatActivity extends AppCompatActivity {
                         try {
                             jsonObject = new JSONObject(ServerResponse);
                             JSONArray result = jsonObject.getJSONArray("messages");
-                            String from, to, messageBody, createdAt;
+                            String from, to, messageBody, createdAt, status;
                             for(int i = 0; i < result.length(); i++) {
                                 from = result.getJSONObject(i).getString("from");
                                 to = result.getJSONObject(i).getString("to");
                                 messageBody = result.getJSONObject(i).getString("message_body");
                                 createdAt = result.getJSONObject(i).getString("createdAt");
+                                status = result.getJSONObject(i).getString("status");
                                 if (from.equals(MainActivity.userID)){
-                                    setSendMessages(messageBody,createdAt);
+                                    setSendMessages(messageBody,createdAt,status);
                                     Log.d("ChatActivity","send messages"+messageBody);
                                 }
                                 else{
