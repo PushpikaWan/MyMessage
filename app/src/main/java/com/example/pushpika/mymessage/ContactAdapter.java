@@ -1,7 +1,9 @@
 package com.example.pushpika.mymessage;
 
 import android.content.Context;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,6 +53,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     public class ContactVH extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private TextView nameText;
+        private TextView curMessage;
         private OnClickListener clickListener;
 
         public ContactVH(View itemView, OnClickListener clickListener) {

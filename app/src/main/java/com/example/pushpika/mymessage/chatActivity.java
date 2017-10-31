@@ -46,6 +46,7 @@ public class chatActivity extends AppCompatActivity {
     String HttpUrl = MainActivity.baseUrl+"chat";
     String HttpUrlget = MainActivity.baseUrl+"chat/";
     private ProgressDialog progressDialog;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,16 +59,16 @@ public class chatActivity extends AppCompatActivity {
         //User id
         int myId = 0;
         //User icon
-        Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
+       // Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
         //User name
         String myName = MainActivity.fName;
 
         int yourId = 1;
-        Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
-        String yourName = RoomsActivity.currentUser.getFname();
+        //Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
+        String yourName = "mmmm";
 
-        final User me = new User(myId, myName, myIcon);
-        final User you = new User(yourId, yourName, yourIcon);
+        final User me = new User(myId, myName, null);
+        final User you = new User(yourId, yourName, null);
 
         mChatView = (ChatView)findViewById(R.id.chat_view);
 
@@ -113,16 +114,16 @@ public class chatActivity extends AppCompatActivity {
         //User id
         int myId = 0;
         //User icon
-        Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
+       //Bitmap myIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_2);
         //User name
         String myName = MainActivity.fName;
 
         int yourId = 1;
-        Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
+        //Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
         String yourName = RoomsActivity.currentUser.getFname();
 
-        final User me1 = new User(myId, myName, myIcon);
-        final User you1 = new User(yourId, yourName, yourIcon);
+        final User me1 = new User(myId, myName, null);
+        final User you1 = new User(yourId, yourName, null);
         Calendar calendar = null;
         ISO8601 iso8601 = new ISO8601();
         try {
@@ -145,10 +146,10 @@ public class chatActivity extends AppCompatActivity {
     public void setReceivedMessages(String recMessage, String createdat){
 
         int yourId = 1;
-        Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
+        //Bitmap yourIcon = BitmapFactory.decodeResource(getResources(), R.drawable.face_1);
         String yourName = RoomsActivity.currentUser.getFname();
 
-        final User you1 = new User(yourId, yourName, yourIcon);
+        final User you1 = new User(yourId, yourName, null);
 
         Calendar calendar = null;
         ISO8601 iso8601 = new ISO8601();
@@ -243,6 +244,13 @@ public class chatActivity extends AppCompatActivity {
 
         }
 
+    @Override
+    public void onBackPressed() {
+
+        handler.removeCallbacksAndMessages(null);
+        finish();
+    }
+
     public void getPrvMessagesFromServer(){
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, HttpUrlget+RoomsActivity.currentUser.getID(),
@@ -252,8 +260,8 @@ public class chatActivity extends AppCompatActivity {
                     public void onResponse(String ServerResponse) {
                         String state,userID,message, fname, lname;
                         // Hiding the progress dialog after all task complete.
-                        progressDialog.setMessage("Loading...");
-                        progressDialog.show();
+                        //progressDialog.setMessage("Loading...");
+                        //progressDialog.show();
                         Log.d("MainActivity","server response is"+ServerResponse);
                         JSONObject jsonObject = null, userObject = null;
                         try {
@@ -274,7 +282,16 @@ public class chatActivity extends AppCompatActivity {
                                     Log.d("ChatActivity","received messages"+messageBody);
                                 }
                             }
-                            progressDialog.dismiss();
+                            //progressDialog.dismiss();
+                           HttpUrlget = MainActivity.baseUrl+"chat/one/";
+                            handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    getPrvMessagesFromServer();
+                                }
+                            },1000);
+//                            getPrvMessagesFromServer();
                             // Log.d("MainAct userid",userObject.get("_id").toString());
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -288,7 +305,7 @@ public class chatActivity extends AppCompatActivity {
                     public void onErrorResponse(VolleyError volleyError) {
 
                         // Hiding the progress dialog after all task complete.
-                        progressDialog.dismiss();
+                        //progressDialog.dismiss();
                         Log.d("Newchat error",volleyError.toString());
                         // Showing error message if something goes wrong.
                         //Toast.makeText(getContext(), volleyError.toString(), Toast.LENGTH_LONG).show();
@@ -319,6 +336,8 @@ public class chatActivity extends AppCompatActivity {
             }
 
         };
+
+
 
         // Creating RequestQueue.
         // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);

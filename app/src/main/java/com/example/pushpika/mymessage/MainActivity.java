@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    public static String baseUrl = "http://10.42.0.210:3002/api/";
+    public static String baseUrl = "http://192.168.1.101:3002/api/";
     String HttpUrl = baseUrl+"authenticate";
     public static String jwtToken = "";
     public static String userID ="";
@@ -47,14 +48,16 @@ public class MainActivity extends AppCompatActivity {
 
     private ProgressDialog progressDialog;
     private SharedPreferences sharedPreferences;
+    private LinearLayout linearLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        linearLayout = (LinearLayout) findViewById(R.id.full_linearlayout);
         emailField = (EditText) findViewById(R.id.input_email);
         userKeyField = (EditText) findViewById(R.id.input_password);
+        linearLayout.setVisibility(View.INVISIBLE);
         progressDialog= new ProgressDialog(MainActivity.this);
         String storedUserName, storedPassword;
         // Creating Volley newRequestQueue .
@@ -66,6 +69,10 @@ public class MainActivity extends AppCompatActivity {
         if(state.equals("yes")){
             authUser(storedUserName,storedPassword);
         }
+        else{
+            linearLayout.setVisibility(View.VISIBLE);
+        }
+
     }
 
     public void register(View view){
@@ -135,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
                         progressDialog.dismiss();
                         // Showing error message if something goes wrong.
                         Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
+                        linearLayout.setVisibility(View.VISIBLE);
                     }
                 }) {
 

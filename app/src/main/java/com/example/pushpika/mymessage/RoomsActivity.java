@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -12,20 +13,34 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RoomsActivity extends AppCompatActivity {
 
@@ -35,10 +50,17 @@ public class RoomsActivity extends AppCompatActivity {
     private ContactAdapter adapter;
     private SharedPreferences sharedPreferences;
     private ProgressDialog progressDialog;
+    // Creating Volley RequestQueue.
+    RequestQueue requestQueue;
+    String HttpUrlget = MainActivity.baseUrl+"chat/all/sent";
 
     private Gson gson;
     private List<Contact> contactList;
     public static Contact currentUser;
+    private Handler handler;
+    // Storing server url into String variable.
+    String HttpUrl = MainActivity.baseUrl+"user/id/";
+    View mainview;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,7 +71,8 @@ public class RoomsActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
-
+        // Creating Volley newRequestQueue .
+        requestQueue = Volley.newRequestQueue(RoomsActivity.this);
         adapter = new ContactAdapter(this, getContacts());
         final Intent intentchat = new Intent(this,chatActivity.class);
         adapter.setOnClickListener(new ContactAdapter.OnClickListener() {
@@ -63,10 +86,13 @@ public class RoomsActivity extends AppCompatActivity {
                 //Toast.makeText(RoomsActivity.this, "contact clicked", Toast.LENGTH_SHORT).show();
 
             }
+
         });
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+
+        getPrvMessagesFromServer();
     }
 
     @Override
@@ -166,17 +192,46 @@ public class RoomsActivity extends AppCompatActivity {
         }
 
         if (!contacts.contains(contact)) {
-            contacts.add(contact);
-            sharedPreferences.edit().putString("contacts", gson.toJson(contacts)).apply();
-            updateList(contact);
+
+            if(!checkAlreadyadded(contact)){
+                contacts.add(contact);
+                sharedPreferences.edit().putString("contacts", gson.toJson(contacts)).apply();
+                updateList(contact);
+            }
         }
     }
 
+    private boolean checkAlreadyadded(Contact contact){
+        boolean alreadyIn = false;
+        if(contactList.isEmpty()){
+            return alreadyIn;
+        }
+      for(int i = 0; i < contactList.size(); i++){
+          if (contact.getID().equals(contactList.get(i).getID())){
+              alreadyIn = true;
+          }
+      }
+        return alreadyIn;
+    }
+
+    private boolean checkAlreadyAddedUsingUserID(String uid){
+        boolean alreadyIn = false;
+        if(contactList == null){
+            return alreadyIn;
+        }
+        for(int i = 0; i < contactList.size(); i++){
+            if (uid.equals(contactList.get(i).getID())){
+                alreadyIn =true;
+            }
+        }
+        return alreadyIn;
+    }
     private void updateList(Contact contact) {
         if (!adapter.getContacts().contains(contact)) {
             adapter.getContacts().add(contact);
             adapter.notifyDataSetChanged();
         }
+
     }
 
     public void showError(String errorMessage) {
@@ -192,6 +247,184 @@ public class RoomsActivity extends AppCompatActivity {
         progressDialog.show();
     }
 
+    public void getPrvMessagesFromServer(){
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, HttpUrlget,
+                new Response.Listener<String>() {
+
+                    @Override
+                    public void onResponse(String ServerResponse) {
+                        String state,userID,message, fname, lname;
+                        // Hiding the progress dialog after all task complete.
+                        //progressDialog.setMessage("Loading...");
+                        //progressDialog.show();
+                        Log.d("Room Activ","server response is"+ServerResponse);
+                        JSONObject jsonObject = null, userObject = null;
+                        try {
+                            jsonObject = new JSONObject(ServerResponse);
+                            JSONArray result = jsonObject.getJSONArray("messages");
+                            String from, to, messageBody, createdAt;
+                            for(int i = 0; i < result.length(); i++) {
+                                from = result.getJSONObject(i).getString("from");
+                                to = result.getJSONObject(i).getString("to");
+                                messageBody = result.getJSONObject(i).getString("message_body");
+                                createdAt = result.getJSONObject(i).getString("createdAt");
+                                Log.d("Room chat new req","msg body"+messageBody);
+                                if(!checkAlreadyAddedUsingUserID(from)){
+                                    getAndAddUser(from);
+                                }
+                                getAndAddUser(from);
+                            }
+                            //progressDialog.dismiss();
+                            handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    getPrvMessagesFromServer();
+                                }
+                            },1000);
+//                            getPrvMessagesFromServer();
+                            // Log.d("MainAct userid",userObject.get("_id").toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Showing response message coming from server.
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        // Hiding the progress dialog after all task complete.
+                        //progressDialog.dismiss();
+                        Log.d("Newchat error",volleyError.toString());
+                        // Showing error message if something goes wrong.
+                        //Toast.makeText(getContext(), volleyError.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                String auth = MainActivity.jwtToken;
+                headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                headers.put("Authorization", auth);
+                return headers;
+            }
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+
+                // Creating Map String Params.
+                Map<String, String> params = new HashMap<String, String>();
+
+                // Adding All values to Params.
+                params.put("user_id", RoomsActivity.currentUser.getID());
+                return params;
+            }
+
+        };
+
+
+
+        // Creating RequestQueue.
+        // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+
+        // Adding the StringRequest object into requestQueue.
+        requestQueue.add(stringRequest);
+
+    }
+
+    private void getAndAddUser(final String userId){
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, HttpUrl+userId,
+                new Response.Listener<String>() {
+
+                    @Override
+                    public void onResponse(String ServerResponse) {
+                        String state,userID,message, fname, lname, email;
+                        // Hiding the progress dialog after all task complete.
+                        //progressBar.setVisibility(View.GONE);
+                        Log.d("MainActivity","server response is"+ServerResponse);
+                        JSONObject jsonObject = null, userObject = null;
+                        try {
+                            jsonObject = new JSONObject(ServerResponse);
+                            state =  jsonObject.get("success").toString();
+                            message = jsonObject.get("message").toString();
+
+                            if(state.equals("true")){
+                                userObject = (JSONObject) jsonObject.get("user");
+
+                                userID = userObject.get("_id").toString();
+                                email = userObject.get("email").toString();
+                                fname = userObject.get("fname").toString();
+                                lname = userObject.get("lname").toString();
+
+                                openChatWith(new Contact(email,fname,lname,userID));
+                            }
+
+                            else{
+                               //false
+                            }
+
+                            // Log.d("MainAct userid",userObject.get("_id").toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Showing response message coming from server.
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        // Hiding the progress dialog after all task complete.
+                       // progressBar.setVisibility(View.GONE);
+                        Log.d("Newchat error",volleyError.toString());
+                        // Showing error message if something goes wrong.
+                        //Toast.makeText(getContext(), volleyError.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                String auth = MainActivity.jwtToken;
+                headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                headers.put("Authorization", auth);
+                return headers;
+            }
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+
+                // Creating Map String Params.
+                Map<String, String> params = new HashMap<String, String>();
+
+                // Adding All values to Params.
+                params.put("email", userId);
+                return params;
+            }
+
+        };
+
+        // Creating RequestQueue.
+        // RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+
+        // Adding the StringRequest object into requestQueue.
+        requestQueue.add(stringRequest);
+    }
+
+    public void updateView(int indexid){
+
+    }
     public void dismissLoading() {
         progressDialog.dismiss();
     }
