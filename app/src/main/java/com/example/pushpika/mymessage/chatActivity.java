@@ -1,6 +1,7 @@
 package com.example.pushpika.mymessage;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -52,6 +53,8 @@ public class chatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        //clear data
+        RoomsActivity.newMessageNodes.clear();
         // Creating Volley newRequestQueue .
         requestQueue = Volley.newRequestQueue(chatActivity.this);
         progressDialog= new ProgressDialog(chatActivity.this);
@@ -249,6 +252,8 @@ public class chatActivity extends AppCompatActivity {
 
         handler.removeCallbacksAndMessages(null);
         finish();
+        Intent intent = new Intent(this,RoomsActivity.class);
+        startActivity(intent);
     }
 
     public void getPrvMessagesFromServer(){

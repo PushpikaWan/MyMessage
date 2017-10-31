@@ -65,7 +65,24 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         }
 
         public void bind(Contact contact) {
-            nameText.setText(contact.getFname()+ " " +contact.getLname());
+            if (RoomsActivity.newMessageNodes.isEmpty()){
+                nameText.setText(contact.getFname()+ " " +contact.getLname());
+            }
+            else{
+                boolean isInList =false;
+                for (int count = 0; count < RoomsActivity.newMessageNodes.size(); count++) {
+                    Log.d("ContactAdapter","Holder triggered"+RoomsActivity.newMessageNodes.get(count));
+                    if(contact.getID().equals(RoomsActivity.newMessageNodes.get(count))){
+                        isInList =true;
+                    }
+                }
+                if(isInList){
+                    nameText.setText(" New  "+contact.getFname()+ " " +contact.getLname());
+                }
+                else{
+                    nameText.setText(contact.getFname()+ " " +contact.getLname());
+                }
+            }
         }
 
         @Override

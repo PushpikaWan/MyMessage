@@ -58,6 +58,7 @@ public class RoomsActivity extends AppCompatActivity {
     private List<Contact> contactList;
     public static Contact currentUser;
     private Handler handler;
+    public static List<String> newMessageNodes = new ArrayList<>();
     // Storing server url into String variable.
     String HttpUrl = MainActivity.baseUrl+"user/id/";
     View mainview;
@@ -68,7 +69,8 @@ public class RoomsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_rooms);
         contactList = new ArrayList<>();
         gson = new Gson();
-
+        //clear data
+        newMessageNodes.clear();
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         sharedPreferences = getSharedPreferences("rooms", Context.MODE_PRIVATE);
         // Creating Volley newRequestQueue .
@@ -199,11 +201,12 @@ public class RoomsActivity extends AppCompatActivity {
                 updateList(contact);
             }
         }
+        adapter.notifyDataSetChanged();
     }
 
     private boolean checkAlreadyadded(Contact contact){
         boolean alreadyIn = false;
-        if(contactList.isEmpty()){
+        if(contactList == null){
             return alreadyIn;
         }
       for(int i = 0; i < contactList.size(); i++){
@@ -231,7 +234,6 @@ public class RoomsActivity extends AppCompatActivity {
             adapter.getContacts().add(contact);
             adapter.notifyDataSetChanged();
         }
-
     }
 
     public void showError(String errorMessage) {
@@ -274,6 +276,15 @@ public class RoomsActivity extends AppCompatActivity {
                                     getAndAddUser(from);
                                 }
                                 getAndAddUser(from);
+                                boolean isalreadyhave = false;
+                                for (int count = 0; count < newMessageNodes.size(); count++) {
+                                    if(from.equals(newMessageNodes.get(count))){
+                                        isalreadyhave =true;
+                                    }
+                                }
+                                if(!isalreadyhave){
+                                    newMessageNodes.add(from);
+                                }
                             }
                             //progressDialog.dismiss();
                             handler = new Handler();
