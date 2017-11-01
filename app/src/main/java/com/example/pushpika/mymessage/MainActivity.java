@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue requestQueue;
 
     // Storing server url into String variable.
-    public static String baseUrl = "http://192.168.1.101:3002/api/";
+    public static String baseUrl = "http://10.42.0.210:3000/api/";
     String HttpUrl = baseUrl+"authenticate";
     public static String jwtToken = "";
     public static String userID ="";

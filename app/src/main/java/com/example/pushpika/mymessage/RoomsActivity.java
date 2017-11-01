@@ -28,6 +28,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
@@ -52,7 +53,7 @@ public class RoomsActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     // Creating Volley RequestQueue.
     RequestQueue requestQueue;
-    String HttpUrlget = MainActivity.baseUrl+"chat/all/sent";
+    String HttpUrlget = MainActivity.baseUrl+"messages/user/sent";
 
     private Gson gson;
     private List<Contact> contactList;
@@ -83,6 +84,7 @@ public class RoomsActivity extends AppCompatActivity {
                 openChatWith(adapter.getContacts().get(position));
                 if (contactList.size()> position){
                     currentUser = contactList.get(position);
+                    finish();
                     startActivity(intentchat);
                 }
                 //Toast.makeText(RoomsActivity.this, "contact clicked", Toast.LENGTH_SHORT).show();
@@ -102,6 +104,12 @@ public class RoomsActivity extends AppCompatActivity {
         MenuInflater inflater = new MenuInflater(this);
         inflater.inflate(R.menu.rooms, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public void onBackPressed() {
+        //handler.removeCallbacksAndMessages(null);
+        finish();
     }
 
     @Override

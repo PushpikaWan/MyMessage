@@ -44,8 +44,8 @@ public class chatActivity extends AppCompatActivity {
 
     // Creating Volley RequestQueue.
     RequestQueue requestQueue;
-    String HttpUrl = MainActivity.baseUrl+"chat";
-    String HttpUrlget = MainActivity.baseUrl+"chat/";
+    String HttpUrl = MainActivity.baseUrl+"message";
+    String HttpUrlget = MainActivity.baseUrl+"messages/history/user/";
     private ProgressDialog progressDialog;
     private Handler handler;
 
@@ -301,7 +301,7 @@ public class chatActivity extends AppCompatActivity {
                                 }
                             }
                             //progressDialog.dismiss();
-                           HttpUrlget = MainActivity.baseUrl+"chat/one/";
+                           HttpUrlget = MainActivity.baseUrl+"messages/undelivered/user/";
                             handler = new Handler();
                             handler.postDelayed(new Runnable() {
                                 @Override
