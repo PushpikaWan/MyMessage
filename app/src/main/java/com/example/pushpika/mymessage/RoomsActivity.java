@@ -83,6 +83,7 @@ public class RoomsActivity extends AppCompatActivity {
             public void onClick(int position) {
                 openChatWith(adapter.getContacts().get(position));
                 if (contactList.size()> position){
+                    handler.removeCallbacksAndMessages(null);
                     currentUser = contactList.get(position);
                     finish();
                     startActivity(intentchat);
@@ -108,7 +109,7 @@ public class RoomsActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        //handler.removeCallbacksAndMessages(null);
+        handler.removeCallbacksAndMessages(null);
         finish();
     }
 
@@ -302,6 +303,7 @@ public class RoomsActivity extends AppCompatActivity {
                                     getPrvMessagesFromServer();
                                 }
                             },1000);
+
 //                            getPrvMessagesFromServer();
                             // Log.d("MainAct userid",userObject.get("_id").toString());
                         } catch (JSONException e) {
